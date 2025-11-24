@@ -49,36 +49,13 @@ terraform plan
 terraform apply
 ```
 
-### 3. Configure AWS CLI
-
-**Option A: Using AWS Profile**
-
-Add to `~/.aws/config`:
-```ini
-[profile localstack]
-region = ca-central-1
-endpoint_url = http://localhost:4566
-```
-
-Add to `~/.aws/credentials`:
-```ini
-[localstack]
-aws_access_key_id = test
-aws_secret_access_key = test
-```
-
-Then use:
-```bash
-export AWS_PROFILE=localstack
-aws s3 ls
-```
-
-**Option B: Using awslocal**
+### 3. Install awslocal
 
 ```bash
 pip install awscli-local
-awslocal s3 ls
 ```
+
+The `awslocal` command is a wrapper around AWS CLI that automatically points to LocalStack (no profile configuration needed).
 
 ## Configuration
 
@@ -105,97 +82,81 @@ DEBUG=0
 
 ### S3
 
+**List buckets:**
+```bash
+awslocal s3 ls
+```
+
+**Create a bucket:**
+```bash
+awslocal s3 mb s3://test-bucket
+```
+
 **Upload a file:**
 ```bash
-aws --profile localstack s3 cp file.txt s3://my-local-bucket/
-# or
 awslocal s3 cp file.txt s3://my-local-bucket/
 ```
 
-**List objects:**
+**Download a file:**
 ```bash
-aws --profile localstack s3 ls s3://my-local-bucket/
+awslocal s3 cp s3://my-local-bucket/file.txt downloaded.txt
 ```
 
-**Python (boto3):**
-```python
-import boto3
-
-s3 = boto3.client(
-    's3',
-    endpoint_url='http://localhost:4566',
-    aws_access_key_id='test',
-    aws_secret_access_key='test',
-    region_name='ca-central-1'
-)
-
-# Upload file
-s3.upload_file('local.txt', 'my-local-bucket', 'remote.txt')
-
-# List buckets
-response = s3.list_buckets()
-print(response['Buckets'])
+**List objects in bucket:**
+```bash
+awslocal s3 ls s3://my-local-bucket/
 ```
 
-**Node.js (AWS SDK v3):**
-```javascript
-import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3';
+**Delete a file:**
+```bash
+awslocal s3 rm s3://my-local-bucket/file.txt
+```
 
-const s3 = new S3Client({
-  endpoint: 'http://localhost:4566',
-  region: 'ca-central-1',
-  credentials: {
-    accessKeyId: 'test',
-    secretAccessKey: 'test',
-  },
-  forcePathStyle: true,
-});
-
-const response = await s3.send(new ListBucketsCommand({}));
-console.log(response.Buckets);
+**Delete a bucket:**
+```bash
+awslocal s3 rb s3://test-bucket --force
 ```
 
 ### SES
 
-**Send an email:**
+**List verified identities:**
 ```bash
-aws --profile localstack ses send-email \
+awslocal ses list-identities
+```
+
+**Send a simple email:**
+```bash
+awslocal ses send-email \
   --from sender@example.com \
   --destination "ToAddresses=recipient@example.com" \
-  --message "Subject={Data=Test},Body={Text={Data='Hello from LocalStack'}}"
+  --message "Subject={Data=Test Email},Body={Text={Data='Hello from LocalStack SES'}}"
 ```
 
-**Python (boto3):**
-```python
-import boto3
-
-ses = boto3.client(
-    'ses',
-    endpoint_url='http://localhost:4566',
-    region_name='ca-central-1',
-    aws_access_key_id='test',
-    aws_secret_access_key='test'
-)
-
-response = ses.send_email(
-    Source='sender@example.com',
-    Destination={'ToAddresses': ['recipient@example.com']},
-    Message={
-        'Subject': {'Data': 'Test Email'},
-        'Body': {'Text': {'Data': 'Hello from LocalStack!'}}
-    }
-)
-print(f"Message ID: {response['MessageId']}")
+**Send email with HTML:**
+```bash
+awslocal ses send-email \
+  --from sender@example.com \
+  --destination "ToAddresses=recipient@example.com" \
+  --message "Subject={Data=HTML Email},Body={Html={Data='<h1>Hello</h1><p>This is a test.</p>'}}"
 ```
 
-**Using Template:**
-```python
-response = ses.send_templated_email(
-    Source='sender@example.com',
-    Destination={'ToAddresses': ['recipient@example.com']},
-    Template='example-template',
-    TemplateData='{"name": "John Doe"}'
-)
+**Send templated email:**
+```bash
+awslocal ses send-templated-email \
+  --source sender@example.com \
+  --destination "ToAddresses=recipient@example.com" \
+  --template example-template \
+  --template-data '{"name":"John Doe"}'
+```
+
+**Verify a new email identity:**
+```bash
+awslocal ses verify-email-identity --email-address newuser@example.com
+```
+
+**Get send quota:**
+```bash
+awslocal ses get-send-quota
 ```
 
 ## LocalStack Features
@@ -242,20 +203,20 @@ terraform show
 terraform destroy
 ```
 
-### AWS CLI
+### awslocal
 
 ```bash
 # Check LocalStack health
 curl http://localhost:4566/_localstack/health
 
 # List all S3 buckets
-aws --profile localstack s3 ls
+awslocal s3 ls
 
 # List verified SES identities
-aws --profile localstack ses list-identities
+awslocal ses list-identities
 
 # Get SES send quota
-aws --profile localstack ses get-send-quota
+awslocal ses get-send-quota
 ```
 
 ## Troubleshooting
@@ -289,11 +250,11 @@ terraform destroy
 terraform apply
 ```
 
-### AWS CLI not connecting
+### awslocal not working
 
-Verify your profile configuration:
+Make sure it's installed:
 ```bash
-aws configure list --profile localstack
+pip install awscli-local
 ```
 
 Test with explicit endpoint:
