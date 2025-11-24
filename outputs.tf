@@ -23,7 +23,3 @@ output "ses_sender_arn" {
   value       = aws_ses_email_identity.sender.arn
 }
 
-output "ses_template_name" {
-  description = "Name of the SES email template"
-  value       = aws_ses_template.example.name
-}
