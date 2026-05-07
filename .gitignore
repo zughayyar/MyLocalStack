@@ -39,6 +39,9 @@ terraform.rc
 # LocalStack volume directory
 volume/
 
+# Lambda build artifacts
+build/
+
 # IDE
 .vscode/
 .idea/
