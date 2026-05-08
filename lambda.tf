@@ -33,8 +33,9 @@ resource "aws_lambda_function" "confirm_upload" {
 
   environment {
     variables = {
-      LOG_LEVEL     = "INFO"
-      SQS_QUEUE_URL = aws_sqs_queue.upload_events.url
+      LOG_LEVEL         = "INFO"
+      SQS_QUEUE_URL     = aws_sqs_queue.upload_events.url
+      AWS_ENDPOINT_URL  = "http://localhost.localstack.cloud:4566"
     }
   }
 }
