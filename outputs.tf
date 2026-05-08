@@ -33,3 +33,13 @@ output "ses_sender_arn" {
   value       = aws_ses_email_identity.sender.arn
 }
 
+output "upload_events_queue_url" {
+  description = "URL of the upload-events SQS queue"
+  value       = aws_sqs_queue.upload_events.url
+}
+
+output "upload_events_queue_arn" {
+  description = "ARN of the upload-events SQS queue"
+  value       = aws_sqs_queue.upload_events.arn
+}
+

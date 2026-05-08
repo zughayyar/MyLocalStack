@@ -13,6 +13,7 @@ provider "aws" {
     iam    = "http://localhost:4566"
     logs   = "http://localhost:4566"
     sts    = "http://localhost:4566"
+    sqs    = "http://localhost:4566"
   }
 
   # Required for S3 bucket operations with LocalStack

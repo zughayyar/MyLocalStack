@@ -2,10 +2,8 @@
 S3 ObjectCreated handler — fires when a presigned upload lands under the
 `pending/` prefix in the documents bucket.
 
-This is a placeholder: it parses the S3 event and logs a structured line.
-Later this can be extended to either
-  - publish to SQS for async processing, or
-  - call the backend's confirm-upload endpoint directly.
+Parses the S3 event, logs structured metadata, and publishes each record
+to the upload-events SQS queue for async downstream processing.
 """
 
 import json
@@ -14,8 +12,13 @@ import os
 import urllib.parse
 from pathlib import PurePosixPath
 
+import boto3
+
 logger = logging.getLogger()
 logger.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
+
+_sqs = boto3.client("sqs", endpoint_url=os.environ.get("AWS_ENDPOINT_URL"))
+_QUEUE_URL = os.environ["SQS_QUEUE_URL"]
 
 
 def _parse_record(record):
@@ -59,6 +62,7 @@ def lambda_handler(event, context):
     for record in records:
         info = _parse_record(record)
         logger.info("upload_complete %s", json.dumps(info))
+        _sqs.send_message(QueueUrl=_QUEUE_URL, MessageBody=json.dumps(info))
         processed.append(info)
 
     return {

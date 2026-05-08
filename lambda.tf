@@ -33,9 +33,24 @@ resource "aws_lambda_function" "confirm_upload" {
 
   environment {
     variables = {
-      LOG_LEVEL = "INFO"
+      LOG_LEVEL     = "INFO"
+      SQS_QUEUE_URL = aws_sqs_queue.upload_events.url
     }
   }
+}
+
+resource "aws_iam_role_policy" "confirm_upload_sqs" {
+  name = "confirm-upload-sqs-send"
+  role = aws_iam_role.confirm_upload.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["sqs:SendMessage"]
+      Resource = aws_sqs_queue.upload_events.arn
+    }]
+  })
 }
 
 resource "aws_lambda_permission" "allow_s3_invoke" {
