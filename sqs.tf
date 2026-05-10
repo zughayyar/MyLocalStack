@@ -5,7 +5,7 @@ resource "aws_sqs_queue" "upload_events_dlq" {
 resource "aws_sqs_queue" "upload_events" {
   name                       = "upload-events"
   message_retention_seconds  = 86400
-  visibility_timeout_seconds = 60
+  visibility_timeout_seconds = 120
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.upload_events_dlq.arn
