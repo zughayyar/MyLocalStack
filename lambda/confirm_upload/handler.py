@@ -2,9 +2,9 @@
 S3 ObjectCreated handler — fires when a presigned upload lands under the
 `pending/` prefix in the documents bucket.
 
-Parses the S3 event, identifies the upload kind (document vs. generic
-resource), and publishes a normalized message to the upload-events SQS
-queue for the backend listener (SQSConsumer) to confirm-upload async.
+Parses the S3 event for document uploads and publishes a normalized
+message to the upload-events SQS queue for the backend listener
+(SQSConsumer) to confirm-upload async.
 """
 
 import json
@@ -24,24 +24,19 @@ _QUEUE_URL = os.environ["SQS_QUEUE_URL"]
 
 def _parse_key(key: str) -> dict:
     """
-    Map an S3 key to a normalized payload.
+    Map an S3 key to a normalized document payload.
 
-    Recognized shapes (always under a `pending/` prefix):
-      - documents:
-            pending/{org_id}/documents/uploads/document/{date}/{document_id}/{resource_id}{ext}
-      - legacy resource (image/audio/video, also used by older documents):
-            pending/{org_id}/{location|shared}/{origin}/{type}/{date}/{resource_id}{ext}
+    Recognized shape (under a `pending/` prefix):
+        pending/{org_id}/documents/uploads/document/{date}/{document_id}/{resource_id}{ext}
 
-    Returns a dict including `kind` so the consumer can branch:
+    Returns a dict including `kind`:
       - "document_pending_upload" — has org_id, document_id, resource_id
-      - "resource_pending_upload" — has org_id, resource_id (legacy)
-      - "unknown" — does not match either shape
+      - "unknown" — does not match the document shape
     """
     parts = PurePosixPath(key).parts
     if not parts or parts[0] != "pending":
         return {"kind": "unknown"}
 
-    # Documents shape: 8 parts, parts[2]/[3]/[4] are literals
     if (
         len(parts) == 8
         and parts[2] == "documents"
@@ -55,18 +50,6 @@ def _parse_key(key: str) -> dict:
             "date": parts[5],
             "document_id": parts[6],
             "resource_id": PurePosixPath(parts[7]).stem,
-        }
-
-    # Legacy resource shape: 7 parts
-    if len(parts) == 7:
-        return {
-            "kind": "resource_pending_upload",
-            "org_id": parts[1],
-            "location": parts[2],
-            "origin": parts[3],
-            "resource_type": parts[4],
-            "date": parts[5],
-            "resource_id": PurePosixPath(parts[6]).stem,
         }
 
     return {"kind": "unknown"}
