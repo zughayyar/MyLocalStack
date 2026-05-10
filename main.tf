@@ -14,3 +14,24 @@ resource "aws_s3_bucket_versioning" "documents" {
     status = "Enabled"
   }
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "documents" {
+  bucket = aws_s3_bucket.documents.id
+
+  rule {
+    id     = "expire-pending-uploads"
+    status = "Enabled"
+
+    filter {
+      prefix = "pending/"
+    }
+
+    expiration {
+      days = 1
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+}
