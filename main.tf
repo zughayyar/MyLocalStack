@@ -15,6 +15,18 @@ resource "aws_s3_bucket_versioning" "documents" {
   }
 }
 
+resource "aws_s3_bucket_cors_configuration" "documents" {
+  bucket = aws_s3_bucket.documents.id
+
+  cors_rule {
+    allowed_headers = ["Content-Type", "Authorization"]
+    allowed_methods = ["PUT", "GET", "HEAD"]
+    allowed_origins = ["http://localhost:3000"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
+  }
+}
+
 resource "aws_s3_bucket_lifecycle_configuration" "documents" {
   bucket = aws_s3_bucket.documents.id
 
