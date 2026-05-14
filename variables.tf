@@ -13,7 +13,7 @@ variable "documents_bucket_name" {
 variable "environment" {
   description = "Environment tag"
   type        = string
-  default     = "local"
+  default     = "dev"
 }
 
 variable "ses_sender_email" {

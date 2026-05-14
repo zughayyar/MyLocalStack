@@ -5,7 +5,7 @@ data "archive_file" "confirm_upload" {
 }
 
 resource "aws_iam_role" "confirm_upload" {
-  name = "confirm-upload-lambda-role"
+  name = "${var.environment}-confirm-upload-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -23,7 +23,7 @@ resource "aws_iam_role_policy_attachment" "confirm_upload_logs" {
 }
 
 resource "aws_lambda_function" "confirm_upload" {
-  function_name    = "confirm-upload"
+  function_name    = "${var.environment}-confirm-upload"
   filename         = data.archive_file.confirm_upload.output_path
   source_code_hash = data.archive_file.confirm_upload.output_base64sha256
   role             = aws_iam_role.confirm_upload.arn
